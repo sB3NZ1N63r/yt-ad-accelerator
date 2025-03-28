@@ -4,12 +4,16 @@
     * GLOBAL VARIABLES
     */
 
-    const playbackRate = 16;
+    const playbackRate = 2;
     let currentVideoTime = 0;
     let obs1 = null;
     let obs2 = null;
     let obs3 = null;
     let obs4 = null;
+
+    let skipAdByClick = false;
+    let skipBtnCurrent = null;
+    let skipBtnActive = false;
 
     /**
     * MAIN FUNCTIONS
@@ -46,6 +50,9 @@
                     // reload on ad blocker warnings
                     refreshOnEnforcementMessage();
                     obs4 = new MutationObserver(() => {
+                        //skipBtnTest();
+                        handleProgressBar();
+
                         skipBtnClick();
                         adVideoManipulation();
                         actualVideoListenser();
@@ -84,10 +91,13 @@
 
     const skipBtnClick = () => {
         try {
+            skipBtnCurrent = null;
+
             const skipBtn1 = getElementByXpath('//span[@class="ytp-ad-skip-button-container"]/button');
             if (skipBtn1) {
-                skipBtn1.click();
+                skipBtnCurrent = skipBtn1; //skipBtn1.click();
                 console.info('skip button click by XPath successful');
+                skipBtnInfo();
             }
             const skipBtnList = [];
             const targetClassNames = [
@@ -104,10 +114,41 @@
             skipBtnList.push(document.querySelector('[id^="skip-button"]'));
             skipBtnList.forEach((btn) => {
                 if (btn) {
-                    btn.click();
+                    skipBtnCurrent = btn; //btn.click();
                     console.info('skip button click by ClassName/ID successful');
+                    skipBtnInfo();
                 }
             });
+
+            if (skipBtnCurrent != null) {
+                setTimeout(() => {
+                    if (skipAdByClick && skipBtnCurrent.checkVisibility()) {
+                        skipBtnCurrent.click();
+                    }
+                }, 500);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+
+    }
+
+    const skipBtnInfo = () => {
+        try {
+            if (skipBtnCurrent != null) {
+                //skipBtn1.click();
+                console.info('skip button Information, ...');
+                console.info('className = ' + skipBtnCurrent.className);
+                console.info('checkVisibility = ' + skipBtnCurrent.checkVisibility());
+                console.info('disabled = ' + skipBtnCurrent.disabled);
+                console.info('draggable = ' + skipBtnCurrent.draggable);
+                console.info('outerText = ' + skipBtnCurrent.outerText);
+
+                //console.info('getAttributeNames = ' + skipBtnCurrent.getAttributeNames());
+                console.info('getAttribute("style") = ' + skipBtnCurrent.getAttribute("style"));
+                // 'display: none;' 'opacity: 0.5;'
+                
+            }
         } catch (err) {
             console.error(err);
         }
@@ -119,7 +160,15 @@
             if (!videoElement) return;
             videoElement.volume = 0;
             videoElement.muted = true;
-            videoElement.playbackRate = playbackRate;
+
+            var playbackRate_ = playbackRate;
+            if (skipBtnCurrent != null && skipBtnCurrent.checkVisibility()) {
+                //playbackRate_ = 16;
+                playbackRate_ = playbackRate + 4;
+                console.info('set playback rate to ' + playbackRate_);
+            }
+
+            videoElement.playbackRate = playbackRate_;
         }, 500);
     }
 
@@ -160,6 +209,26 @@
         }
     }
 
+    const handleProgressBar = () => {
+        const progressBarContainer = getElementByXpath('//*[@id="container" and contains(@class, "ytp-progress-bar-container")]');
+        if (progressBarContainer != null) {
+            console.info('progress bar container found by Xpath');
+            console.info('className = ' + progressBarContainer.className);
+            console.info('childNodes = ' + progressBarContainer.childNodes);
+
+            const progressBar = progressBarContainer.querySelector("div.ytp-progress-bar")
+            if (progressBar != null) {
+                console.info('progress bar container found by querySelector');
+                console.info('className = ' + progressBar.className);
+                console.info('childNodes = ' + progressBar.childNodes);
+
+                //console.info('getAttributeNames = ' + progressBar.getAttributeNames());
+                console.info('getAttribute("aria-valuenow") = ' + progressBar.getAttribute("aria-valuenow"));
+                console.info('getAttribute("aria-valuenow") = ' + progressBar.getAttribute("aria-valuemax"));
+            }
+        }
+    }
+    
     const resetCurrentVideoTime = () => { if (currentVideoTime) currentVideoTime = 0; }
 
     /**
