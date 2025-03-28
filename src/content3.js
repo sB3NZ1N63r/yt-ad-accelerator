@@ -50,8 +50,7 @@
                     // reload on ad blocker warnings
                     refreshOnEnforcementMessage();
                     obs4 = new MutationObserver(() => {
-                        //skipBtnTest();
-                        handleProgressBar();
+                        //handleProgressBar();
 
                         skipBtnClick();
                         adVideoManipulation();
@@ -97,7 +96,7 @@
             if (skipBtn1) {
                 skipBtnCurrent = skipBtn1; //skipBtn1.click();
                 console.info('skip button click by XPath successful');
-                skipBtnInfo();
+                //skipBtnInfo();
             }
             const skipBtnList = [];
             const targetClassNames = [
@@ -116,16 +115,17 @@
                 if (btn) {
                     skipBtnCurrent = btn; //btn.click();
                     console.info('skip button click by ClassName/ID successful');
-                    skipBtnInfo();
+                    //skipBtnInfo();
                 }
             });
 
             if (skipBtnCurrent != null) {
-                setTimeout(() => {
+                //setTimeout(() => {
                     if (skipAdByClick && skipBtnCurrent.checkVisibility()) {
                         skipBtnCurrent.click();
+                        console.info('skip button clicked');
                     }
-                }, 500);
+                //}, 500);
             }
         } catch (err) {
             console.error(err);
@@ -163,13 +163,12 @@
 
             var playbackRate_ = playbackRate;
             if (skipBtnCurrent != null && skipBtnCurrent.checkVisibility()) {
-                //playbackRate_ = 16;
-                playbackRate_ = playbackRate + 4;
-                console.info('set playback rate to ' + playbackRate_);
+                playbackRate_ = playbackRate + 6;
             }
 
+            console.info('set playback rate to ' + playbackRate_);
             videoElement.playbackRate = playbackRate_;
-        }, 500);
+        }, 100);
     }
 
     const actualVideoListenser = () => {
@@ -189,6 +188,8 @@
             const adElement = getElementByXpath('//*[@id="container" and contains(@class, "ytd-enforcement-message-view-model")]//*[@id="header" and contains(@class, "ytd-enforcement-message-view-model")]//*[@id="dismiss-button" and contains(@class, "ytd-enforcement-message-view-model")]/button-view-model/button');
             if (!adElement) return;
             adElement.click();
+
+            console.info('enforcement message clicked');
         }, 500);
     }
 
@@ -204,13 +205,16 @@
             params.set("t", `${timestamp}s`);
             let newURL = new URL(`${url.origin}${url.pathname}?${params}`);
             window.location.href = newURL;
+
+            console.info('enforcement message parameters set');
         } else {
             window.location.reload();
+            console.info('enforcement message window reloaded');
         }
     }
 
     const handleProgressBar = () => {
-        const progressBarContainer = getElementByXpath('//*[@id="container" and contains(@class, "ytp-progress-bar-container")]');
+        const progressBarContainer = getElementByXpath('//*[@class="ytp-progress-bar-container"]');
         if (progressBarContainer != null) {
             console.info('progress bar container found by Xpath');
             console.info('className = ' + progressBarContainer.className);
