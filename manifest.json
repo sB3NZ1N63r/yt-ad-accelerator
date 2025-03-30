@@ -1,4 +1,4 @@
-{
+    {
     "name": "YouTube Ad Accelerator",
     "short_name": "YouTube Ad Accelerator",
     "description": "The chrome tool improves your YouTube viewing by automating ad skipping, muting & playback acceleration without blocking ad.",
@@ -27,8 +27,11 @@
             "matches": [
                 "https://www.youtube.com/*"
             ],
-            "css": [],
+            "css": [
+                "./src/styles.css"
+            ],
             "js": [
+                "./src/utils.js",
                 "./src/content3.js"
             ],
             "all_frames": true,

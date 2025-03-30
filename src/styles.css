@@ -1,0 +1,24 @@
+.indicator {
+    /* font: 1em 'Roboto', sans-serif; */
+    font: 'Arial';
+    /* font-family: Helvetica, Arial, sans-serif; */
+    font-size: 1.4em;
+    /* font-weight: bold; */
+    font-weight: 400;
+    position: absolute;
+    /* top: 55px; */
+    border-radius: 0.55em;
+    color: #FFF;
+    /* padding-top: 0.26em; */
+    padding-top: 0.08em;
+    padding-bottom: 0.2em;
+    position: absolute;
+    /* padding-left: 0.9em; */
+    /* padding-right: 0.82em; */
+    padding-left: 0.8em;
+    padding-right: 0.72em;
+    left: calc(50% - 20px);
+    background-color: rgba(35, 35, 35, 0.6);
+    z-index: 1000;
+    display: none;
+}
