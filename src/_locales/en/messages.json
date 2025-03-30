@@ -1,0 +1,59 @@
+{
+  "appName": {
+    "message": "YouTube Ad Accelerator"
+  },
+  "appVersion": {
+    "message": "7.0.1.2"
+  },
+  "appDescShort": {
+    "message": "Automated ad skipping, muting & playback acceleration on YT"
+  },
+  "appDescExtended": {
+    "message": "This extension automated ad skipping, muting & playback acceleration without blocking ad, enhances your YouTube experience by making ad watching smoother."
+  },
+  "optSkipAdByTitle": {
+    "message": "Skip Ad by?"
+  },
+  "optSkipAdByClick": {
+    "message": "Skip Ad by clickity click."
+  },
+  "optSkipWhenTitle": {
+    "message": "How quickly?"
+  },
+  "optPlaybackRateMin": {
+    "message": "Playback rate minimum"
+  },
+  "optPlaybackRateMax": {
+    "message": "Playback rate maximum"
+  },
+  "optSkipAdDurationStart": {
+    "message": "Increase playback rate if greater as this duration."
+  },
+  "optDisable": {
+    "message": "Disable extension"
+  },
+  "linkReport": {
+    "message": "Not working?"
+  },
+  "reloadNotice": {
+    "message": "Reload the page to apply changes."
+  },
+  "updateNotice": {
+    "message": "Hey! There's a newer version available."
+  },
+  "download": {
+    "message": "Download"
+  },
+  "seeReleases": {
+    "message": "See releases"
+  },
+  "saving": {
+    "message": "Saving..."
+  },
+  "chromeWebstore01": {
+    "message": "Love the app then, Chrome Webstore."
+  },
+  "chromeWebstore02": {
+    "message": "Leave a Review"
+  }
+}
