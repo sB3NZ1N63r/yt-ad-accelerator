@@ -138,6 +138,53 @@ export default class YT_AdAccelerator {
         this.pause();
     }
 
+    waitAdVideoEnd(video) {
+        this.log('waiting for end ad video...');
+
+        return new Promise((resolve) => {
+            const interval = setInterval(() => {
+                if (video.currentTime >= video.duration - 1.0) {
+                    this.log('...ad video finished');
+                    clearInterval(interval);
+                    resolve();
+                }
+            }, 1000);
+        });
+    }
+
+    async manipulateAdVideo(video, button) {
+        if (!video) { return; }
+        if (!video.muted) {
+            video.volume = 0;
+            video.muted = true;
+        }
+
+        const rateMin = parseFloat(this.options.playbackRateMin);
+        const rateMax = parseFloat(this.options.playbackRateMax);
+        let rate = rateMin;
+
+        if (button && button.checkVisibility()) {
+            this.log("video.duration", video.duration);
+            this.log("video.currentTime", video.currentTime)
+            if (video.duration !== null && video.currentTime !== null) {
+                const adDurationStart = parseFloat(this.options.skipAdDurationStart);
+                const adDurationEnd = 8;
+
+                if (video.duration > adDurationStart && video.currentTime < video.duration - adDurationEnd) {
+                    rate = rateMax;
+                }
+            }
+        } else {
+            this.log('test progress bar');
+            //handleProgressBar();
+        }
+
+        if (video.playbackRate !== rate) {
+            this.log('set playback rate to ', rate);
+            video.playbackRate = rate;
+        }
+    }
+
     /**
      * Starts the liking magic.
      * The liker won't do anything unless this method is called.
@@ -147,59 +194,25 @@ export default class YT_AdAccelerator {
         this.status = 'running';
         this.cache = {};
 
-        const playbackRateMin = parseFloat(this.options.playbackRateMin);
-        const playbackRateMax = parseFloat(this.options.playbackRateMax);
-        const adDurationStart = parseFloat(this.options.skipAdDurationStart);
-        const adDurationEnd = 8;
-
         await this.waitForVideo();
         const { video } = this.cache;
 
-        let hasVideoTimeUpdate = false;
-
         const onVideoTimeUpdate = (e) => {
             if (!this.isAdPlaying()) {
-//                if (hasVideoTimeUpdate) {
-//                    this.log("remove onVideoTimeUpdate");
-//                    hasVideoTimeUpdate = false;
-//                    video.removeEventListener('timeupdate', onVideoTimeUpdate);
-//                }
-                return
-            };
-
-            if (!video.muted) {
-                video.volume = 0;
-                video.muted = true;
-                video.playbackRate = playbackRateMin;
+                return;
             }
+
+            this.manipulateAdVideo(video, null);
 
             this.clickSkip(this.options.skipAdByClick);
-            let playbackRate_ = playbackRateMin;
 
-            if (this.cache.skipButton && this.cache.skipButton.checkVisibility()) {
-                this.log("video.duration", video.duration);
-                this.log("video.currentTime", video.currentTime)
-                if (video.duration !== null && video.currentTime !== null) {
-                    if (video.duration > adDurationStart && video.currentTime < video.duration - adDurationEnd) {
-                        playbackRate_ = playbackRateMax;
-                    } else if (video.currentTime > video.duration - adDurationEnd){
-                        this.log("remove onVideoTimeUpdate");
-                        video.playbackRate = playbackRateMin;
-                        video.removeEventListener('timeupdate', onVideoTimeUpdate);
-                    }
-                } else {
-                    //handleProgressBar();
-                }
-            }
+            this.manipulateAdVideo(video, this.cache.skipButton);
 
-            if (video.playbackRate !== playbackRate_) {
-                this.log('set playback rate to ' + playbackRate_);
-                video.playbackRate = playbackRate_;
-            }
+            //this.log("remove onVideoTimeUpdate");
+            //video.removeEventListener('timeupdate', onVideoTimeUpdate);
         };
 
         this.log("add onVideoTimeUpdate");
-        hasVideoTimeUpdate = true;
         video.addEventListener('timeupdate', onVideoTimeUpdate);
     }
 }
