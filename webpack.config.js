@@ -32,7 +32,8 @@ module.exports = {
     new CopyWebpackPlugin({
       patterns: [
         `${paths.src}/manifest.json`,
-        { from: `${paths.src}/*.html`, context: paths.src },
+        //{ from: `${paths.src}/*.html`, context: paths.src },
+        { from: `${paths.src}/options.html`, context: paths.src },
         { from: `${paths.src}/_locales`, to: `${paths.build}/_locales` },
         { from: `${paths.src}/css`, to: `${paths.build}/css` },
         { from: `${paths.src}/icons`, to: `${paths.build}/icons` },
