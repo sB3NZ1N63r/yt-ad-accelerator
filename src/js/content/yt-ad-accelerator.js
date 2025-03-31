@@ -1,11 +1,11 @@
 const selectors = {
     skipButton: [
-        "ytp-ad-skip-button-modern",
-        "ytp-ad-skip-button",
-        "ytp-ad-skip-button-modern ytp-button",
-        "ytp-ad-skip-button ytp-button",
-        "ytp-ad-skip-button-container",
-        "ytp-skip-ad-button",
+        ".ytp-ad-skip-button-modern",
+        ".ytp-ad-skip-button",
+        "#ytp-ad-skip-button-modern ytp-button",
+        ".ytp-ad-skip-button ytp-button",
+        ".ytp-ad-skip-button-container",
+        ".ytp-skip-ad-button",
     ],
     dislikeButton: [
         '#top-level-buttons-computed > ytd-toggle-button-renderer:nth-child(2) yt-icon-button',
@@ -101,14 +101,13 @@ export default class YT_AdAccelerator {
         return new Promise((resolve) => {
             const interval = setInterval(() => {
                 const skipButton = document.querySelectorAll(selectors.skipButton)[0];
-                const dislikeButton = document.querySelectorAll(
-                    selectors.dislikeButton
-                )[0];
+                //const dislikeButton = document.querySelectorAll(selectors.dislikeButton)[0];
+
                 // Make sure both buttons exist
-                if (skipButton && dislikeButton) {
+                if (skipButton) { //(skipButton && dislikeButton) {
                     // Store buttons
                     this.cache.skipButton = skipButton;
-                    this.cache.dislikeButton = dislikeButton;
+                    //this.cache.dislikeButton = dislikeButton;
 
                     this.log('...buttons ready');
                     clearInterval(interval);
@@ -135,7 +134,7 @@ export default class YT_AdAccelerator {
         }
 
         this.cache.skipButton.click();
-        this.log('like button clicked');
+        this.log('skip button clicked');
         this.pause();
     }
 
@@ -156,25 +155,36 @@ export default class YT_AdAccelerator {
         await this.waitForVideo();
         const { video } = this.cache;
 
+        let hasVideoTimeUpdate = false;
+
         const onVideoTimeUpdate = (e) => {
-            if (!this.isAdPlaying()) return;
-            //if (!video.muted) {
+            if (!this.isAdPlaying()) {
+//                if (hasVideoTimeUpdate) {
+//                    this.log("remove onVideoTimeUpdate");
+//                    hasVideoTimeUpdate = false;
+//                    video.removeEventListener('timeupdate', onVideoTimeUpdate);
+//                }
+                return
+            };
+
+            if (!video.muted) {
                 video.volume = 0;
                 video.muted = true;
-            //}
-
-            let playbackRate_ = playbackRateMin;
-            video.playbackRate = playbackRate_;
+                video.playbackRate = playbackRateMin;
+            }
 
             this.clickSkip(this.options.skipAdByClick);
+            let playbackRate_ = playbackRateMin;
 
             if (this.cache.skipButton && this.cache.skipButton.checkVisibility()) {
-                //log("video.duration", video.duration);
-                //log("video.currentTime", video.currentTime)
+                this.log("video.duration", video.duration);
+                this.log("video.currentTime", video.currentTime)
                 if (video.duration !== null && video.currentTime !== null) {
                     if (video.duration > adDurationStart && video.currentTime < video.duration - adDurationEnd) {
                         playbackRate_ = playbackRateMax;
                     } else if (video.currentTime > video.duration - adDurationEnd){
+                        this.log("remove onVideoTimeUpdate");
+                        video.playbackRate = playbackRateMin;
                         video.removeEventListener('timeupdate', onVideoTimeUpdate);
                     }
                 } else {
@@ -183,10 +193,13 @@ export default class YT_AdAccelerator {
             }
 
             if (video.playbackRate !== playbackRate_) {
-                log('set playback rate to ' + playbackRate_);
+                this.log('set playback rate to ' + playbackRate_);
                 video.playbackRate = playbackRate_;
             }
         };
+
+        this.log("add onVideoTimeUpdate");
+        hasVideoTimeUpdate = true;
         video.addEventListener('timeupdate', onVideoTimeUpdate);
     }
 }
