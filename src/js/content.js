@@ -45,6 +45,7 @@ const debug = new Debug();
     //const liker = new Liker({ options, log: debug.log });
     const accelerator = new YT_AdAccelerator({ options, log: debug.log });
     accelerator.onPause = debug.save;
+    debug.log('accelerator paused.');
   } catch (err) {
     debug.log(err);
   } finally {
