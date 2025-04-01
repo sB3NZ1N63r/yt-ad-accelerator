@@ -18,7 +18,7 @@ export default class Debug {
     this.messages.push(message);
 
     if (process.env.NODE_ENV === 'development') {
-      console.log(`%c[DEBUG] ${new Date().toISOString()}: %c${message}`, 'font-style: italic', '');
+      console.log(`%c[DEBUG] ${new Date().toTimeString()}: %c${message}`, 'font-style: italic', '');
     }
   }
 

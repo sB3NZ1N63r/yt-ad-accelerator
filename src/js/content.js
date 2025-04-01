@@ -30,7 +30,7 @@ const debug = new Debug();
       skipAdByClick: false,
       playbackRateMin: '2',
       playbackRateMax: '6',
-      skipAdDurationStart: '20',
+      durationTrigger: '20',
       disabled: false,
     };
     const optionManager = new OptionManager(defaults);

@@ -73,7 +73,7 @@ export default class YT_AdAccelerator {
                 this.cache.video = document.querySelector('.video-stream');
                 // Does the video exist?
                 if (this.cache.video) {
-                    this.log('...video ready');
+                    this.log('...video ready', this.cache.video.baseURI);
                     clearInterval(interval);
                     resolve();
                 }
@@ -103,8 +103,8 @@ export default class YT_AdAccelerator {
                 const skipButton = document.querySelectorAll(selectors.skipButton)[0];
                 //const dislikeButton = document.querySelectorAll(selectors.dislikeButton)[0];
 
-                // Make sure both buttons exist
-                if (skipButton) { //(skipButton && dislikeButton) {
+                // Make sure buttons exist and visible
+                if (skipButton && skipButton.checkVisibility()) { //(skipButton && dislikeButton) {
                     // Store buttons
                     this.cache.skipButton = skipButton;
                     //this.cache.dislikeButton = dislikeButton;
@@ -112,6 +112,8 @@ export default class YT_AdAccelerator {
                     this.log('...buttons ready');
                     clearInterval(interval);
                     resolve();
+                } else {
+                    this.cache.skipButton = null;
                 }
             }, 1000);
         });
@@ -124,10 +126,11 @@ export default class YT_AdAccelerator {
     async clickSkip(enabled) {
         await this.waitForButtons();
 
-        if (!this.cache.skipButton.checkVisibility()) {
-            this.log('skip button not visible');
+        if (!this.cache.skipButton) {
+            this.log('buttons are lost');
             return;
         }
+
         if (!enabled) {
             this.log('skip ad by button', enabled);
             return;
@@ -143,7 +146,7 @@ export default class YT_AdAccelerator {
 
         return new Promise((resolve) => {
             const interval = setInterval(() => {
-                if (video.currentTime >= video.duration - 1.0) {
+                if (video.currentTime >= video.duration - 1.0 || video.ended) {
                     this.log('...ad video finished');
                     clearInterval(interval);
                     resolve();
@@ -152,36 +155,46 @@ export default class YT_AdAccelerator {
         });
     }
 
-    async manipulateAdVideo(video, button) {
-        if (!video) { return; }
-        if (!video.muted) {
-            video.volume = 0;
-            video.muted = true;
+    async manipulateAdVideo(adVideo, button) {
+        if (!adVideo) { return; }
+        if (!adVideo.muted) {
+            adVideo.volume = 0;
+            adVideo.muted = true;
+            adVideo.defaultMuted = true;
         }
 
         const rateMin = parseFloat(this.options.playbackRateMin);
         const rateMax = parseFloat(this.options.playbackRateMax);
         let rate = rateMin;
 
-        if (button && button.checkVisibility()) {
-            this.log("video.duration", video.duration);
-            this.log("video.currentTime", video.currentTime)
-            if (video.duration !== null && video.currentTime !== null) {
-                const adDurationStart = parseFloat(this.options.skipAdDurationStart);
-                const adDurationEnd = 8;
+        if (button) { //(button && button.checkVisibility()) {
+            if (adVideo.duration !== null && adVideo.currentTime !== null) {
+                this.log("adVideo.duration", adVideo.duration);
+                //this.log("adVideo.currentTime", adVideo.currentTime)
 
-                if (video.duration > adDurationStart && video.currentTime < video.duration - adDurationEnd) {
+                const durationTrigger = parseFloat(this.options.durationTrigger);
+                const currentTimeStart = 10;
+                const currentTimeEnd = adVideo.duration - 8;
+
+                if (
+                    adVideo.duration > durationTrigger &&
+                    adVideo.currentTime > currentTimeStart &&
+                    adVideo.currentTime < currentTimeEnd
+                ) {
                     rate = rateMax;
                 }
+            } else if (!adVideo.duration || adVideo.duration == 'NaN') {
+                this.log('adVideo.duration are lost');
             }
         } else {
             this.log('test progress bar');
             //handleProgressBar();
         }
 
-        if (video.playbackRate !== rate) {
+        if (adVideo.playbackRate !== rate) {
             this.log('set playback rate to ', rate);
-            video.playbackRate = rate;
+            adVideo.playbackRate = rate;
+            adVideo.defaultPlaybackRate = rate;
         }
     }
 
@@ -190,29 +203,48 @@ export default class YT_AdAccelerator {
      * The liker won't do anything unless this method is called.
      */
     async start() {
-        this.log('status: running');
+        this.log('YT_AdAccelerator status: running');
         this.status = 'running';
         this.cache = {};
 
         await this.waitForVideo();
         const { video } = this.cache;
+        let onVideoTimeUpdateAdded = false;
+        let lastVideoBaseURI = '';
+        let skipButtonReady = false;
+        let videoCurrentTime = -1;
 
         const onVideoTimeUpdate = (e) => {
             if (!this.isAdPlaying()) {
+                if (video) { videoCurrentTime = video.currentTime; }
                 return;
             }
 
-            this.manipulateAdVideo(video, null);
+            this.log("videoCurrentTime: ", videoCurrentTime);
+            if (video) { this.log("adVideoCurrentTime: ", video.currentTime); }
+
+            if (!skipButtonReady) {
+                this.manipulateAdVideo(video, null);
+            } 
 
             this.clickSkip(this.options.skipAdByClick);
+            skipButtonReady = this.cache.skipButton !== null;
 
-            this.manipulateAdVideo(video, this.cache.skipButton);
+            if (skipButtonReady) {
+                this.manipulateAdVideo(video, this.cache.skipButton);
+            }
 
-            //this.log("remove onVideoTimeUpdate");
-            //video.removeEventListener('timeupdate', onVideoTimeUpdate);
+            if (!lastVideoBaseURI.startsWith(video.baseURI, 0)) {
+                this.log("remove onVideoTimeUpdate", video.baseURI);
+                video.removeEventListener('timeupdate', onVideoTimeUpdate);
+            }
         };
 
-        this.log("add onVideoTimeUpdate");
-        video.addEventListener('timeupdate', onVideoTimeUpdate);
+        if (video.baseURI.startsWith("https://www.youtube.com/watch", 0) && !lastVideoBaseURI.startsWith(video.baseURI, 0)) {
+            lastVideoBaseURI = video.baseURI;
+
+            this.log("add onVideoTimeUpdate");
+            video.addEventListener('timeupdate', onVideoTimeUpdate);
+        }
     }
 }

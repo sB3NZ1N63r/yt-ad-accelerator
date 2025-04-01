@@ -4,5 +4,7 @@ release
 .DS_Store
 
 .idea
+.vscode
+
 dist
 package-lock.json
