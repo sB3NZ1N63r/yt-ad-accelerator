@@ -9,7 +9,7 @@ export default class Debug {
     this.save = this.save.bind(this);
 
     this.log(`YouTube Ad Accelerator v${chrome.runtime.getManifest().version}`);
-    this.log(new Date().toISOString());
+    //this.log(new Date().toISOString());
     this.log('User agent:', `\n${window.navigator.userAgent}`);
   }
 
