@@ -4,8 +4,11 @@
      * GLOBAL VARIABLES
      * =======================
      */
-    const PLAYBACK_RATE = 16;
+    const PLAYBACK_RATE = 2;
     let currentVideoTime = 0;
+
+    let skipAdByBtnClick = false;
+    let skipAdBtnValidated = false;
 
     // MutationObservers
     let obs1 = null, obs2 = null, obs3 = null, obs4 = null;
@@ -85,9 +88,17 @@
      * =======================
      */
     const skipBtnClick = () => {
+        skipAdBtnValidated = false;
+        if (!videoElement) return;
+        if (!videoElement.closest(".ad-showing")) return;
+
         try {
             const skipBtnXPath = getElementByXpath('//span[@class="ytp-ad-skip-button-container"]/button');
-            if (skipBtnXPath) skipBtnXPath.click();
+            if (skipBtnXPath && skipAdByBtnClick) {
+                skipBtnXPath.click();
+                console.info('skipBtnXPath clicked');
+                skipAdBtnValidated = skipBtnXPath.checkVisibility();
+            }
 
             const targetClassNames = [
                 "ytp-ad-skip-button-modern",
@@ -100,9 +111,42 @@
             const skipBtnList = [];
             targetClassNames.forEach(className => skipBtnList.push(...document.getElementsByClassName(className)));
             skipBtnList.push(document.querySelector('[id^="skip-button"]'));
-            skipBtnList.forEach(btn => btn?.click());
+            if (skipAdByBtnClick) {
+                //skipBtnList.forEach(btn => btn?.click());
+                skipBtnList.forEach((btn) => {
+                    if(btn) {
+                        btn.click();
+                        if (!skipAdBtnValidated) {
+                            skipAdBtnValidated = btn.checkVisibility();
+                        }
+                        console.info('skipBtnList.forEach clicked');
+                    }
+                });
+            }
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    const refreshOnAdShowing = () => {
+        if (!videoElement) return;
+        if (!videoElement.closest(".ad-showing")) return;
+        if (!skipAdBtnValidated) return;
+
+        const currentURL = window.location.href ?? document.URL;
+        const timestamp = currentVideoTime ?? 0;
+        console.info('timestamp = ', currentVideoTime);
+
+        if (currentURL && timestamp) {
+            const url = new URL(currentURL);
+            const params = new URLSearchParams(url.search);
+            params.set("t", `${timestamp}s`);
+            const newURL = new URL(`${url.origin}${url.pathname}?${params}`);
+            console.info('window.location.href newURL', newURL);
+            window.location.href = newURL;
+        } else {
+            window.location.reload();
+            console.info('window.location reload');
         }
     };
 
@@ -111,7 +155,27 @@
         if (videoElement.closest(".ad-showing")) {
             videoElement.volume = 0;
             videoElement.muted = true;
-            videoElement.playbackRate = PLAYBACK_RATE;
+            let playbackRate_ = PLAYBACK_RATE;
+            videoElementDuration = parseInt(videoElement.duration) || 0;
+            videoElementCurrentTime = parseInt(videoElement.currentTime) || 0;
+
+            if (videoElementDuration !== null && videoElementCurrentTime !== null) {
+                if (videoElementDuration > 15 && videoElementCurrentTime > 5 && videoElementCurrentTime < videoElementDuration - 10) {
+                    playbackRate_ = playbackRate_ + 4;
+                }
+
+                if (videoElementDuration > 60) {
+                    skipAdByBtnClick = true;
+                    console.info('set skipAdByBtnClick to ', skipAdByBtnClick);
+                } else {
+                    skipAdByBtnClick = false;
+                }
+            }
+
+            if (videoElement.playbackRate !== playbackRate_) {
+                console.info('set playbackRate to ' + playbackRate_);
+                videoElement.playbackRate = playbackRate_;
+            }
         }
     };
 
@@ -119,7 +183,10 @@
         const adElement = getElementByXpath(
             '//*[@id="container" and contains(@class, "ytd-enforcement-message-view-model")]//*[@id="dismiss-button"]/button-view-model/button'
         );
-        if (adElement) adElement.click();
+        if (adElement) {
+            adElement.click();
+            console.info('adElement clicked');
+        }
     };
 
     const refreshOnEnforcementMessage = () => {
@@ -135,8 +202,10 @@
             params.set("t", `${timestamp}s`);
             const newURL = new URL(`${url.origin}${url.pathname}?${params}`);
             window.location.href = newURL;
+            console.info('window.location.href newURL');
         } else {
             window.location.reload();
+            console.info('window.location reload');
         }
     };
 
@@ -151,9 +220,12 @@
         lastTimeUpdate = now;
 
         if (!videoElement) return;
-        currentVideoTime = parseInt(videoElement.currentTime) || 0;
+        if (!videoElement.closest(".ad-showing")) {
+            currentVideoTime = parseInt(videoElement.currentTime) || 0;
+            //console.info('currentVideoTime = ', currentVideoTime);
+        }
 
-        const skipCategories = await loadUserSettings();
+        /*const skipCategories = await loadUserSettings();
 
         // SponsorBlock skipping
         if (nextSegmentIndex < sponsorSegments.length) {
@@ -170,11 +242,12 @@
             } else {
                 nextSegmentIndex++; // skip this segment
             }
-        }
+        }*/
 
         // Ad skipping and manipulation
         adVideoManipulation();
         skipBtnClick();
+        refreshOnAdShowing();
     };
 
     const attachVideoListener = () => {
@@ -192,8 +265,8 @@
 
         lastVideoId = videoId;
         videoElement = getElementByXpath('//*[@id="movie_player"]/div[1]/video');
-        sponsorSegments = await fetchSponsorBlockSegments(videoId);
-        console.log("sponsorSegments:", sponsorSegments);
+//        sponsorSegments = await fetchSponsorBlockSegments(videoId);
+//        console.log("sponsorSegments:", sponsorSegments);
     }
 
     /**
