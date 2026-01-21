@@ -94,7 +94,7 @@
 
         try {
             const skipBtnXPath = getElementByXpath('//span[@class="ytp-ad-skip-button-container"]/button');
-            if (skipBtnXPath && skipAdByBtnClick) {
+            if (skipBtnXPath && skipBtnXPath.checkVisibility() && skipAdByBtnClick) {
                 skipBtnXPath.click();
                 console.info('skipBtnXPath clicked');
                 skipAdBtnValidated = skipBtnXPath.checkVisibility();
@@ -114,7 +114,7 @@
             if (skipAdByBtnClick) {
                 //skipBtnList.forEach(btn => btn?.click());
                 skipBtnList.forEach((btn) => {
-                    if(btn) {
+                    if(btn && btn.checkVisibility()) {
                         btn.click();
                         if (!skipAdBtnValidated) {
                             skipAdBtnValidated = btn.checkVisibility();
