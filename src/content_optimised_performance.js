@@ -329,7 +329,12 @@
     }
 
     // Run once on load
-    window.addEventListener("load", init);
+    window.addEventListener("load", () => {
+        //console.log("YouTube Ad Accelerator v", chrome.runtime.getManifest().version);
+        console.log(`YouTube Ad Accelerator v${chrome.runtime.getManifest().version}`);
+        console.log((new Date).toISOString());
+        init();
+    });
 
     // Handle SPA navigations on YouTube
     window.addEventListener("yt-navigate-finish", () => {
