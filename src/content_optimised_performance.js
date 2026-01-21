@@ -183,10 +183,22 @@
         const adElement = getElementByXpath(
             '//*[@id="container" and contains(@class, "ytd-enforcement-message-view-model")]//*[@id="dismiss-button"]/button-view-model/button'
         );
-        if (adElement) {
+        if (adElement && adElement.checkVisibility()) {
             adElement.click();
             console.info('adElement clicked');
         }
+    };
+    const closeEnforcementMessageAsync = async () => {
+        const enforcementMessageBtn = getElementByXpath(
+            '//*[@id="container" and contains(@class, "ytd-enforcement-message-view-model")]//*[@id="dismiss-button"]/button-view-model/button'
+        );
+        if (!enforcementMessageBtn) return;
+        setTimeout(() => {
+            if (!enforcementMessageBtn.checkVisibility()) return;
+            
+            enforcementMessageBtn.click();
+            console.info('enforcementMessageBtn clicked');
+        }, 6000);
     };
 
     const refreshOnEnforcementMessage = () => {
@@ -301,7 +313,8 @@
 
                     obs4 = new MutationObserver(() => {
                         attachVideoListener();
-                        closeEnforcementMessage();
+                        //closeEnforcementMessage();
+                        //closeEnforcementMessageAsync();
                         handleVideoChange();
                     });
 
