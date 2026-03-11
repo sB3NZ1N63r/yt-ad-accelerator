@@ -6,6 +6,7 @@
      */
     const PLAYBACK_RATE = 2;
     let currentVideoTime = 0;
+    let currentVideoDuration = 0;
 
     let skipAdByBtnClick = false;
     let skipAdBtnValidated = false;
@@ -57,7 +58,7 @@
         }
     }
 
-    const resetCurrentVideoTime = () => { currentVideoTime = 0; };
+    const resetCurrentVideoTime = () => { currentVideoTime = 0; currentVideoDuration = 0; };
 
     async function loadUserSettings() {
         return new Promise((resolve) => {
@@ -156,15 +157,15 @@
             videoElement.volume = 0;
             videoElement.muted = true;
             let playbackRate_ = PLAYBACK_RATE;
-            videoElementDuration = parseInt(videoElement.duration) || 0;
-            videoElementCurrentTime = parseInt(videoElement.currentTime) || 0;
+            const vElementAdDuration = parseInt(videoElement.duration) || 0;
+            const vElementAdCurrentTime = parseInt(videoElement.currentTime) || 0;
 
-            if (videoElementDuration !== null && videoElementCurrentTime !== null) {
-                if (videoElementDuration > 15 && videoElementCurrentTime > 5 && videoElementCurrentTime < videoElementDuration - 10) {
+            if (vElementAdDuration !== null && vElementAdCurrentTime !== null) {
+                if (vElementAdDuration > 15 && vElementAdCurrentTime > 5 && vElementAdCurrentTime < vElementAdDuration - 10) {
                     playbackRate_ = playbackRate_ + 4;
                 }
 
-                if (videoElementDuration > 60) {
+                if (vElementAdDuration > 60) {
                     skipAdByBtnClick = true;
                     console.info('set skipAdByBtnClick to ', skipAdByBtnClick);
                 } else {
@@ -206,11 +207,15 @@
         if (!adElement) return;
 
         const currentURL = window.location.href ?? document.URL;
-        const timestamp = currentVideoTime ?? 0;
+        let timestamp = currentVideoTime ?? 0;
+        const duration = currentVideoDuration ?? 0;
 
         if (currentURL && timestamp) {
             const url = new URL(currentURL);
             const params = new URLSearchParams(url.search);
+            if (duration && (timestamp >= duration)) {
+                timestamp = duration - 1; // Decrease timestamp relativ to duration
+            }
             params.set("t", `${timestamp}s`);
             const newURL = new URL(`${url.origin}${url.pathname}?${params}`);
             window.location.href = newURL;
@@ -235,6 +240,7 @@
         if (!videoElement.closest(".ad-showing")) {
             currentVideoTime = parseInt(videoElement.currentTime) || 0;
             //console.info('currentVideoTime = ', currentVideoTime);
+            currentVideoDuration = parseInt(videoElement.duration) || 0;
         }
 
         /*const skipCategories = await loadUserSettings();
