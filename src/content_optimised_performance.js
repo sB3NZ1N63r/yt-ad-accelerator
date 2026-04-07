@@ -321,6 +321,7 @@
                         attachVideoListener();
                         //closeEnforcementMessage();
                         //closeEnforcementMessageAsync();
+                        refreshOnEnforcementMessage();
                         handleVideoChange();
                     });
 
