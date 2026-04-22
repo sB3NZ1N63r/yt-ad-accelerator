@@ -129,26 +129,47 @@
         }
     };
 
-    const refreshOnAdShowing = () => {
-        if (!videoElement) return;
-        if (!videoElement.closest(".ad-showing")) return;
-        if (!skipAdBtnValidated) return;
+    function updateDocumentLocation (element) {
+        if (!element) return;
 
         const currentURL = window.location.href ?? document.URL;
-        const timestamp = currentVideoTime ?? 0;
+        let timestamp = currentVideoTime ?? 0;
         console.info('timestamp = ', currentVideoTime);
+        const duration = currentVideoDuration ?? 0;
 
         if (currentURL && timestamp) {
             const url = new URL(currentURL);
             const params = new URLSearchParams(url.search);
+            if (duration && (timestamp >= duration)) {
+                timestamp = duration - 1; // Decrease timestamp relativ to duration
+            }
             params.set("t", `${timestamp}s`);
             const newURL = new URL(`${url.origin}${url.pathname}?${params}`);
-            console.info('window.location.href newURL', newURL);
+            console.info('window.location.href = ', newURL);
             window.location.href = newURL;
         } else {
-            window.location.reload();
             console.info('window.location reload');
+            window.location.reload();
         }
+    };
+
+    function hookYtpSpeedmasterOverlay (innerText) {
+        const ytpSpeedmasterOverlay = document.getElementsByClassName("ytp-overlay ytp-speedmaster-overlay");
+        if (!ytpSpeedmasterOverlay && !ytpSpeedmasterOverlay.item(0)) return;
+
+        if (!innerText) {
+            ytpSpeedmasterOverlay.item(0).style.display = 'none'
+        } else {
+            if (ytpSpeedmasterOverlay.item(0).children.length >= 1 && ytpSpeedmasterOverlay.item(0).children.item(0).children.length >= 1) {
+                if (ytpSpeedmasterOverlay.item(0).children.item(0).children.item(0).className.startsWith("ytp-speedmaster-label", 0)) {
+                    ytpSpeedmasterOverlay.item(0).children.item(0).children.item(0).innerText = innerText + 'x';
+                    console.info('.ytp-speedmaster-label.innerText = ', ytpSpeedmasterOverlay.item(0).children.item(0).children.item(0).innerText);
+                    ytpSpeedmasterOverlay.item(0).style.display = '';
+                }
+                
+            }
+        }
+        //console.info('ytp-speedmaster-overlay.style.display =', ytpSpeedmasterOverlay.item(0).style.display);
     };
 
     const adVideoManipulation = () => {
@@ -161,21 +182,25 @@
             const vElementAdCurrentTime = parseInt(videoElement.currentTime) || 0;
 
             if (vElementAdDuration !== null && vElementAdCurrentTime !== null) {
-                if (vElementAdDuration > 15 && vElementAdCurrentTime > 5 && vElementAdCurrentTime < vElementAdDuration - 10) {
+                if (vElementAdDuration > 15 && vElementAdCurrentTime > 6 && vElementAdCurrentTime < vElementAdDuration - 4) {
                     playbackRate_ = playbackRate_ + 4;
                 }
 
-                if (vElementAdDuration > 60) {
-                    skipAdByBtnClick = true;
-                    console.info('set skipAdByBtnClick to ', skipAdByBtnClick);
-                } else {
-                    skipAdByBtnClick = false;
+                if (vElementAdCurrentTime > 60 && vElementAdDuration > 60) {
+                    hookYtpSpeedmasterOverlay(null);
+                    console.info('call updateDocumentLocation');
+                    updateDocumentLocation(videoElement);
+                }
+
+                if (vElementAdCurrentTime >= vElementAdDuration - 1) {
+                    hookYtpSpeedmasterOverlay(null);
                 }
             }
 
             if (videoElement.playbackRate !== playbackRate_) {
-                console.info('set playbackRate to ' + playbackRate_);
+                console.info('videoElement.playbackRate = ', playbackRate_);
                 videoElement.playbackRate = playbackRate_;
+                hookYtpSpeedmasterOverlay(videoElement.playbackRate.toString());
             }
         }
     };
@@ -205,7 +230,7 @@
     const refreshOnEnforcementMessage = () => {
         const adElement = getElementByXpath('//*[@id="container" and contains(@class, "ytd-enforcement-message-view-model")]');
         if (!adElement) return;
-
+        /*
         const currentURL = window.location.href ?? document.URL;
         let timestamp = currentVideoTime ?? 0;
         const duration = currentVideoDuration ?? 0;
@@ -224,6 +249,8 @@
             window.location.reload();
             console.info('window.location reload');
         }
+        */
+       updateDocumentLocation(adElement);
     };
 
     /**
@@ -264,8 +291,8 @@
 
         // Ad skipping and manipulation
         adVideoManipulation();
-        skipBtnClick();
-        refreshOnAdShowing();
+        //skipBtnClick();
+        //refreshOnAdShowing();
     };
 
     const attachVideoListener = () => {
